@@ -99,16 +99,16 @@ BytesCount b = Serializer::serializeAll(buf, &user);
 
 - If serialization/deserialization process of your object can be done in multiple ways, you should inherit MultipleSerializable/MultipleDeserializable(or both):
 ```Cpp
-struct Cat : public S::MultipleSerializable, public S::MultipleDeserializable
+struct Cat : public MultipleSerializable, public MultipleDeserializable
 {
     enum {NameLegsSerializer, AllSerializer, NameLegsDeserializer, AllDeserializer};
     Cat()
-        : S::MultipleSerializable{}, S::MultipleDeserializable{}
+        : MultipleSerializable{}, MultipleDeserializable{}
     {
-        registerSerializer(S::SerializerId(NameLegsSerializer), [this](std::string& buf) { return S::Serializer::serializeAll(buf, &name, &legs); } );
-        registerSerializer(S::SerializerId(AllSerializer), [this](std::string& buf) { return S::Serializer::serializeAll(buf, &name, &legs, &age, &places_to_sleep); } );
-        registerDeserializer(S::SerializerId(NameLegsDeserializer), [this](std::string& buf, S::BytesCount offset) { return S::Deserializer::deserializeAll(buf, offset, &name, &legs); } );
-        registerDeserializer(S::SerializerId(AllDeserializer), [this](std::string& buf, S::BytesCount offset) { return S::Deserializer::deserializeAll(buf, offset, &name, &legs, &age, &places_to_sleep); } );
+        registerSerializer(SerializerId(NameLegsSerializer), [this](std::string& buf) { return Serializer::serializeAll(buf, &name, &legs); } );
+        registerSerializer(SerializerId(AllSerializer), [this](std::string& buf) { return Serializer::serializeAll(buf, &name, &legs, &age, &places_to_sleep); } );
+        registerDeserializer(SerializerId(NameLegsDeserializer), [this](std::string& buf, BytesCount offset) { return Deserializer::deserializeAll(buf, offset, &name, &legs); } );
+        registerDeserializer(SerializerId(AllDeserializer), [this](std::string& buf, BytesCount offset) { return Deserializer::deserializeAll(buf, offset, &name, &legs, &age, &places_to_sleep); } );
     }
     std::string name;
     int legs;
