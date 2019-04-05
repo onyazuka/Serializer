@@ -15,11 +15,7 @@ It allows you to serialize(write to std::string of bytes) such types:
 It is just one header, without any dependencies. So, any c++ compiler should be ok, but I have only tested it on g++.
 
 <h2>Examples</h2>
-First of all, you should do:
-```Cpp
-#include "serializer.hpp"
-using namespace Serialization;
-```
+First of all you should include "serializer.hpp" header and, if you want, do "using namespace Serialization;".
 
 Then, let's try to serialize some simple type:
 ```Cpp
