@@ -210,7 +210,7 @@ typedef std::function<BytesCount(std::string&, BytesCount)> DeserializerFunction
     public:
         typedef std::unordered_map<SerializerId, SerializerFunction> SerializersMap;
 
-        virtual BytesCount serialize(std::string& buf) = 0;
+        inline BytesCount serialize(std::string& buf) { return getCurrentSerializer()(buf); }
         void registerSerializer(SerializerId _id, const SerializerFunction& f);
         // throws if not have such Id
         const SerializerFunction& getCurrentSerializer();
@@ -232,7 +232,7 @@ typedef std::function<BytesCount(std::string&, BytesCount)> DeserializerFunction
     public:
         typedef std::unordered_map<SerializerId, DeserializerFunction> DeserializersMap;
 
-        virtual BytesCount deserialize(std::string& buf, BytesCount offset) = 0;
+        inline BytesCount deserialize(std::string& buf, BytesCount offset) { return getCurrentDeserializer()(buf, offset); }
         void registerDeserializer(SerializerId _id, const DeserializerFunction& f);
         // throws if not have such Id
         const DeserializerFunction& getCurrentDeserializer();

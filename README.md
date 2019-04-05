@@ -20,6 +20,7 @@ First of all, you should do:
 #include "serializer.hpp"
 using namespace Serialization;
 ```
+
 Then, let's try to serialize some simple type:
 ```Cpp
 int i = 5; 							// your value
@@ -61,7 +62,7 @@ b = Serializer::serializeAll(buf, &aw);
 As you can see, addresses are used as arguments, so if you will try to pass raw pointer as parameter, just first value of this type from passed address will be processed.
 
 And, of course, you can do serialization for your own objects. Here you have two options:
-- If serialization/deserialization process of your object can be done only in one way, you should inherit Serializable/Deserializable class:
+- If serialization/deserialization process of your object can be done only in one way, you should inherit Serializable/Deserializable class(or both):
 ```Cpp
 struct User : public Serialization::Serializable, public Serialization::Deserializable
 {
@@ -79,4 +80,47 @@ struct User : public Serialization::Serializable, public Serialization::Deserial
         return S::Deserializer::deserializeAll(buf, offset, &name, &age, &hobbies);
     }
 };
+
+...
+
+User user;
+user.age = 22;
+user.name = "Vasya";
+user.hobbies = {"swimming", "anime", "fishing"};
+
+std::string buf;
+BytesCount b = Serializer::serializeAll(buf, &user);
+
 ```
+
+- If serialization/deserialization process of your object can be done in multiple ways, you should inherit MultipleSerializable/MultipleDeserializable(or both):
+```Cpp
+struct Cat : public S::MultipleSerializable, public S::MultipleDeserializable
+{
+    enum {NameLegsSerializer, AllSerializer, NameLegsDeserializer, AllDeserializer};
+    Cat()
+        : S::MultipleSerializable{}, S::MultipleDeserializable{}
+    {
+        registerSerializer(S::SerializerId(NameLegsSerializer), [this](std::string& buf) { return S::Serializer::serializeAll(buf, &name, &legs); } );
+        registerSerializer(S::SerializerId(AllSerializer), [this](std::string& buf) { return S::Serializer::serializeAll(buf, &name, &legs, &age, &places_to_sleep); } );
+        registerDeserializer(S::SerializerId(NameLegsDeserializer), [this](std::string& buf, S::BytesCount offset) { return S::Deserializer::deserializeAll(buf, offset, &name, &legs); } );
+        registerDeserializer(S::SerializerId(AllDeserializer), [this](std::string& buf, S::BytesCount offset) { return S::Deserializer::deserializeAll(buf, offset, &name, &legs, &age, &places_to_sleep); } );
+    }
+    std::string name;
+    int legs;
+    short age;
+    std::vector<std::string> places_to_sleep;
+};
+
+...
+
+Cat cat;
+cat.age = 5;
+cat.legs = 4;
+cat.name = "Sugrob";
+cat.places_to_sleep = std::move(std::vector<std::string>{"chair", "laptop", "my head"});
+cat.setSerializerId((SerializerId)(Cat::AllSerializer));
+
+Serializer::serializeAll(buf, &cat);
+```
+

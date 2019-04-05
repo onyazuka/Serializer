@@ -35,9 +35,6 @@ struct User : public Serialization::Serializable, public Serialization::Deserial
         return S::Deserializer::deserializeAll(buf, offset, &name, &age, &hobbies);
     }
 
-    /*std::unordered_map<S::SerializerId, S::SerializerFunction> sMap;
-    std::unordered_map<S::SerializerId, S::DeserializerFunction> dsMap;*/
-
 };
 
 struct Cat : public S::MultipleSerializable, public S::MultipleDeserializable
@@ -55,16 +52,6 @@ struct Cat : public S::MultipleSerializable, public S::MultipleDeserializable
     int legs;
     short age;
     std::vector<std::string> places_to_sleep;
-
-    S::BytesCount serialize(std::string &buf)
-    {
-        return getCurrentSerializer()(buf);
-    }
-
-    S::BytesCount deserialize(std::string &buf, S::BytesCount offset)
-    {
-        return getCurrentDeserializer()(buf, offset);
-    }
 };
 
 TEST(BasicTypesTest, SerializerTests)
@@ -249,9 +236,9 @@ TEST(UserTypesTest, SerializerTest)
     User user;
     user.age = 22;
     user.name = "Vasya";
-    user.hobbies = std::move(std::vector<std::string>{"swimming", "anime", "fishing"});
+    user.hobbies = {"swimming", "anime", "fishing"};
 
-    BytesCount b = Serializer::SerializeUnit<User>::serializeUnit(buf, &user);
+    BytesCount b = Serializer::serializeAll(buf, &user);
     EXPECT_EQ(b, sizeof(int) + sizeof(BytesCount) + 5 + sizeof(BytesCount) * 4 + 8 + 5 + 7);
 
     User user1;
@@ -463,4 +450,6 @@ TEST(ArraysTest, SerializerTest)
     EXPECT_EQ(b, b1);
     EXPECT_EQ(arr.size(), arr1.size());
     EXPECT_TRUE(areContainersEqual(arr, arr1));
+
+
 }
