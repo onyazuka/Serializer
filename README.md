@@ -57,6 +57,14 @@ b = Serializer::serializeAll(buf, &aw);
 ```
 As you can see, addresses are used as arguments, so if you will try to pass raw pointer as parameter, just first value of this type from passed address will be processed.
 
+And, to get it back, we again use ArrayWrapper.
+WARNING: before deserialization, memory for array should be already allocated:
+```Cpp
+ArrayWrapper<int> aw1;
+aw11.start = new int[5];
+b = Deserializer::deserializeAll(buf, 0, &aw1);
+```
+
 And, of course, you can do serialization for your own objects. Here you have two options:
 - If serialization/deserialization process of your object can be done only in one way, you should inherit Serializable/Deserializable class(or both):
 ```Cpp
