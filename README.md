@@ -2,7 +2,7 @@
 Simple C++ serializer
 
 <h2>Description</h2>
-Simple one-header c++ library for serialization.
+Simple c++ library for serialization.
 It allows you to serialize(write to std::string of bytes) such types:
 <ul>
 <li>Simple arithmetic types</li>
