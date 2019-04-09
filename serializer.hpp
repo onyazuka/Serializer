@@ -98,6 +98,11 @@ template<typename T, typename... Others>
 struct IsUnorderedMultiset<std::unordered_multiset<T, Others...>> : std::true_type{};
 
 
+template<typename T>
+struct IsString : std::false_type {};
+
+template<>
+struct IsString<std::string> : std::true_type{};
 
 
 /*
@@ -118,7 +123,7 @@ namespace Serialization
     typedef uint64_t ElementsCount;
     typedef uint64_t SerializerId;
     typedef std::function<BytesCount(std::string&)> SerializerFunction;
-typedef std::function<BytesCount(std::string&, BytesCount)> DeserializerFunction;
+    typedef std::function<BytesCount(const std::string&, BytesCount)> DeserializerFunction;
 
     class SerializerExceptions
     {
@@ -198,7 +203,7 @@ typedef std::function<BytesCount(std::string&, BytesCount)> DeserializerFunction
     */
     class Deserializable
     {
-        virtual BytesCount deserialize(std::string& buf, BytesCount offset) = 0;
+        virtual BytesCount deserialize(const std::string& buf, BytesCount offset) = 0;
     };
 
     /*
@@ -232,7 +237,7 @@ typedef std::function<BytesCount(std::string&, BytesCount)> DeserializerFunction
     public:
         typedef std::unordered_map<SerializerId, DeserializerFunction> DeserializersMap;
 
-        inline BytesCount deserialize(std::string& buf, BytesCount offset) { return getCurrentDeserializer()(buf, offset); }
+        inline BytesCount deserialize(const std::string& buf, BytesCount offset) { return getCurrentDeserializer()(buf, offset); }
         void registerDeserializer(SerializerId _id, const DeserializerFunction& f);
         // throws if not have such Id
         const DeserializerFunction& getCurrentDeserializer();
@@ -458,20 +463,20 @@ typedef std::function<BytesCount(std::string&, BytesCount)> DeserializerFunction
         struct DeserializeUnit;
 
         template<typename Arg>
-        static BytesCount deserializeAll(std::string& buf, BytesCount offset, Arg* data);
+        static BytesCount deserializeAll(const std::string& buf, BytesCount offset, Arg* data);
 
         template<typename Arg, typename... Args>
-        static BytesCount deserializeAll(std::string& buf, BytesCount offset, Arg* data, Args... args);
+        static BytesCount deserializeAll(const std::string& buf, BytesCount offset, Arg* data, Args... args);
     };
 
     template<typename Arg>
-    BytesCount Deserializer::deserializeAll(std::string& buf, BytesCount offset, Arg* data)
+    BytesCount Deserializer::deserializeAll(const std::string& buf, BytesCount offset, Arg* data)
     {
         return Deserializer::DeserializeUnit<Arg>::deserializeUnit(buf, offset, data);
     }
 
     template<typename Arg, typename... Args>
-    BytesCount Deserializer::deserializeAll(std::string& buf, BytesCount offset, Arg* data, Args... args)
+    BytesCount Deserializer::deserializeAll(const std::string& buf, BytesCount offset, Arg* data, Args... args)
     {
         BytesCount nextOffset = Deserializer::DeserializeUnit<Arg>::deserializeUnit(buf, offset, data);
         return nextOffset + deserializeAll(buf, offset + nextOffset, args...);
@@ -482,7 +487,7 @@ typedef std::function<BytesCount(std::string&, BytesCount)> DeserializerFunction
     template<typename T>
     struct Deserializer::DeserializeUnit<T, std::enable_if_t<std::is_arithmetic<T>::value> >
     {
-        static BytesCount deserializeUnit(std::string& buf, BytesCount offset, T* data)
+        static BytesCount deserializeUnit(const std::string& buf, BytesCount offset, T* data)
         {
             memcpy(data, &buf[offset], sizeof(T));
             return sizeof(T);
@@ -499,7 +504,7 @@ typedef std::function<BytesCount(std::string&, BytesCount)> DeserializerFunction
     {
         DeserializeUnit() = default;
 
-        static BytesCount deserializeUnit(std::string& buf, BytesCount offset, ArrayWrapper<T>* data)
+        static BytesCount deserializeUnit(const std::string& buf, BytesCount offset, ArrayWrapper<T>* data)
         {
             if(data->start == nullptr) throw SerializerExceptions::InvalidArgs{"serializeUnit<ArrayWrapper>() - invalid arguments passed"};
             BytesCount read = 0;
@@ -521,7 +526,7 @@ typedef std::function<BytesCount(std::string&, BytesCount)> DeserializerFunction
     template<typename T>
     struct Deserializer::DeserializeUnit<T, std::enable_if_t<IsIterable<T>::value>>
     {
-        static BytesCount deserializeUnit(std::string &buf, BytesCount offset, T *data)
+        static BytesCount deserializeUnit(const std::string &buf, BytesCount offset, T *data)
         {
             data->clear();
             using ContSize = typename T::size_type;
@@ -546,7 +551,7 @@ typedef std::function<BytesCount(std::string&, BytesCount)> DeserializerFunction
     {
         DeserializeUnit() = default;
 
-        static BytesCount deserializeUnit(std::string& buf, BytesCount offset, std::string* data)
+        static BytesCount deserializeUnit(const std::string& buf, BytesCount offset, std::string* data)
         {
             data->clear();
             using ContSize = typename std::string::size_type;
@@ -567,7 +572,7 @@ typedef std::function<BytesCount(std::string&, BytesCount)> DeserializerFunction
     {
         DeserializeUnit() = default;
 
-        static BytesCount deserializeUnit(std::string& buf, BytesCount offset, T* data)
+        static BytesCount deserializeUnit(const std::string& buf, BytesCount offset, T* data)
         {
             return data->deserialize(buf, offset);
         }
@@ -580,7 +585,7 @@ typedef std::function<BytesCount(std::string&, BytesCount)> DeserializerFunction
     {
         DeserializeUnit() = default;
 
-        static BytesCount deserializeUnit(std::string& buf, BytesCount offset, T* data)
+        static BytesCount deserializeUnit(const std::string& buf, BytesCount offset, T* data)
         {
             return data->deserialize(buf, offset);
         }
@@ -595,13 +600,14 @@ typedef std::function<BytesCount(std::string&, BytesCount)> DeserializerFunction
     {
         DeserializeUnit() = default;
 
-        static BytesCount deserializeUnit(std::string& buf, BytesCount offset, std::pair<T1, T2>* data)
+        static BytesCount deserializeUnit(const std::string& buf, BytesCount offset, std::pair<T1, T2>* data)
         {
             typedef std::remove_const_t<T1> NonConstT1;
             // throwing away const, because std containers, such as std::unordered_map, use const Key in their value type
             return deserializeAll(buf, offset, const_cast<NonConstT1*>(&data->first), &data->second);
         }
     };
+
 }
 
 

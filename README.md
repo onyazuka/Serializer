@@ -79,7 +79,7 @@ struct User : public Serialization::Serializable, public Serialization::Deserial
         return S::Serializer::serializeAll(buf, &name, &age, &hobbies);
     }
 
-    S::BytesCount deserialize(std::string& buf, S::BytesCount offset)
+    S::BytesCount deserialize(const std::string& buf, S::BytesCount offset)
     {
         return S::Deserializer::deserializeAll(buf, offset, &name, &age, &hobbies);
     }
@@ -107,8 +107,8 @@ struct Cat : public MultipleSerializable, public MultipleDeserializable
     {
         registerSerializer(SerializerId(NameLegsSerializer), [this](std::string& buf) { return Serializer::serializeAll(buf, &name, &legs); } );
         registerSerializer(SerializerId(AllSerializer), [this](std::string& buf) { return Serializer::serializeAll(buf, &name, &legs, &age, &places_to_sleep); } );
-        registerDeserializer(SerializerId(NameLegsDeserializer), [this](std::string& buf, BytesCount offset) { return Deserializer::deserializeAll(buf, offset, &name, &legs); } );
-        registerDeserializer(SerializerId(AllDeserializer), [this](std::string& buf, BytesCount offset) { return Deserializer::deserializeAll(buf, offset, &name, &legs, &age, &places_to_sleep); } );
+        registerDeserializer(SerializerId(NameLegsDeserializer), [this](const std::string& buf, BytesCount offset) { return Deserializer::deserializeAll(buf, offset, &name, &legs); } );
+        registerDeserializer(SerializerId(AllDeserializer), [this](const std::string& buf, BytesCount offset) { return Deserializer::deserializeAll(buf, offset, &name, &legs, &age, &places_to_sleep); } );
     }
     std::string name;
     int legs;

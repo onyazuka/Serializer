@@ -30,7 +30,7 @@ struct User : public Serialization::Serializable, public Serialization::Deserial
         return S::Serializer::serializeAll(buf, &name, &age, &hobbies);
     }
 
-    S::BytesCount deserialize(std::string& buf, S::BytesCount offset)
+    S::BytesCount deserialize(const std::string& buf, S::BytesCount offset)
     {
         return S::Deserializer::deserializeAll(buf, offset, &name, &age, &hobbies);
     }
@@ -45,8 +45,8 @@ struct Cat : public S::MultipleSerializable, public S::MultipleDeserializable
     {
         registerSerializer(S::SerializerId(NameLegsSerializer), [this](std::string& buf) { return S::Serializer::serializeAll(buf, &name, &legs); } );
         registerSerializer(S::SerializerId(AllSerializer), [this](std::string& buf) { return S::Serializer::serializeAll(buf, &name, &legs, &age, &places_to_sleep); } );
-        registerDeserializer(S::SerializerId(NameLegsDeserializer), [this](std::string& buf, S::BytesCount offset) { return S::Deserializer::deserializeAll(buf, offset, &name, &legs); } );
-        registerDeserializer(S::SerializerId(AllDeserializer), [this](std::string& buf, S::BytesCount offset) { return S::Deserializer::deserializeAll(buf, offset, &name, &legs, &age, &places_to_sleep); } );
+        registerDeserializer(S::SerializerId(NameLegsDeserializer), [this](const std::string& buf, S::BytesCount offset) { return S::Deserializer::deserializeAll(buf, offset, &name, &legs); } );
+        registerDeserializer(S::SerializerId(AllDeserializer), [this](const std::string& buf, S::BytesCount offset) { return S::Deserializer::deserializeAll(buf, offset, &name, &legs, &age, &places_to_sleep); } );
     }
     std::string name;
     int legs;
@@ -450,6 +450,31 @@ TEST(ArraysTest, SerializerTest)
     EXPECT_EQ(b, b1);
     EXPECT_EQ(arr.size(), arr1.size());
     EXPECT_TRUE(areContainersEqual(arr, arr1));
+}
 
+TEST(VariousTest, SerializerTest)
+{
+    using namespace Serialization;
+    std::string buf;
 
+    // typedefs and refs
+    typedef std::vector<std::string> VS;
+    VS vs{"111", "222", "333"};
+
+    VS& vs2 = vs;
+
+    Serializer::serializeAll(buf, &vs, &vs2);
+
+    VS vs3, vs4;
+    Deserializer::deserializeAll(buf, 0, &vs3, &vs4);
+    EXPECT_TRUE(areContainersEqual(vs, vs3));
+    EXPECT_TRUE(areContainersEqual(vs2, vs4));
+
+    // const refs
+    const std::string& buf2 = buf;
+
+    VS vs5, vs6;
+    Deserializer::deserializeAll(buf2, 0, &vs5, &vs6);
+    EXPECT_TRUE(areContainersEqual(vs, vs5));
+    EXPECT_TRUE(areContainersEqual(vs2, vs6));
 }
