@@ -2,7 +2,7 @@
 Simple C++ serializer
 
 <h2>Description</h2>
-Simple one-header c++ library for serialization.
+Simple c++ library for serialization.
 It allows you to serialize(write to std::string of bytes) such types:
 <ul>
 <li>Simple arithmetic types</li>
@@ -12,7 +12,7 @@ It allows you to serialize(write to std::string of bytes) such types:
 </ul>
 
 <h2>Requirements</h2>
-It is just one header, without any dependencies. So, any c++ compiler should be ok, but I have only tested it on g++.
+It is just one header, without any dependencies. So, any c++ compiler that supports c++17 should be ok, but I have only tested it on g++.
 
 <h2>Examples</h2>
 First of all you should include "serializer.hpp" header and, if you want, do "using namespace Serialization;".
