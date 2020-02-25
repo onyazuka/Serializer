@@ -2,17 +2,18 @@
 Simple C++ serializer
 
 <h2>Description</h2>
-Simple c++ library for serialization.
-It allows you to serialize(write to std::string of bytes) such types:
+Simple c++ serialization library.
+It allows you to serialize such types:
 <ul>
 <li>Simple arithmetic types</li>
 <li>Arrays</li>
 <li>All std containers</li>
 <li>Your custom types</li>
 </ul>
+It makes a std::string, filled with binary data, on output. Why use std::string? Later, you can write it to a file or make some manipulations and write it somewhere after that.
 
 <h2>Requirements</h2>
-It is just one header, without any dependencies. So, any c++ compiler that supports c++17 should be ok, but I have only tested it on g++.
+It is just one header, without any dependencies. So, any c++ compiler that supports c++17 should be ok, but I have only tested it with g++.
 
 <h2>Examples</h2>
 First of all you should include "serializer.hpp" header and, if you want, do "using namespace Serialization;".
@@ -23,16 +24,16 @@ int i = 5; 							// your value
 std::string buf;		// your buffer
 BytesCount b = Serializer::SerializeUnit<int>::serializeUnit(buf, &i);
 ```
-Here, 'b' is the number of bytes that has been read;
+Here, 'b' is the number of bytes that was read;
 
-And after that, you can try to get it back:
+And after that, you can try to get your number back:
 ```Cpp
 int i1;
 b = Deserializer::DeserializeUnit<int>::deserializeUnit(buf, 0, &i);
 ```
-Here, second argument of deserializeUnit is offset, from which value in 'buf' will be looked for.
+Here, the second argument of deserializeUnit is the offset, from which value in the 'buf' will be looked for.
 
-To not write all this long function and class names, here we have little helper function, with which you can do such things:
+It is very convenient to use the 'serializeAll' function. It uses variadic templates, and with it you could serialize a bunch of things just in one line:
 ```Cpp
 buf.clear();
 double d = 1.1;
@@ -55,9 +56,9 @@ int* pi = new int[10];
 ArrayWrapper aw{pi, 10};
 b = Serializer::serializeAll(buf, &aw);
 ```
-As you can see, addresses are used as arguments, so if you will try to pass raw pointer as parameter, just first value of this type from passed address will be processed.
+As you can see, pointers are used as arguments, so if you try to pass a raw pointer as a parameter, just the first value of this type starting from the passed address will be processed.
 
-And, to get it back, we again use ArrayWrapper.
+And, to get it back, we should use ArrayWrapper again.
 WARNING: before deserialization, memory for array should be already allocated:
 ```Cpp
 ArrayWrapper<int> aw1;
@@ -65,8 +66,8 @@ aw11.start = new int[5];
 b = Deserializer::deserializeAll(buf, 0, &aw1);
 ```
 
-And, of course, you can do serialization for your own objects. Here you have two options:
-- If serialization/deserialization process of your object can be done only in one way, you should inherit Serializable/Deserializable class(or both):
+And, of course, you can serialize your own objects. Here you have two options:
+- If serialization/deserialization of your object can be done only in one way, you should inherit Serializable/Deserializable class(or both):
 ```Cpp
 struct User : public Serialization::Serializable, public Serialization::Deserializable
 {
@@ -97,7 +98,7 @@ BytesCount b = Serializer::serializeAll(buf, &user);
 
 ```
 
-- If serialization/deserialization process of your object can be done in multiple ways, you should inherit MultipleSerializable/MultipleDeserializable(or both):
+- If serialization/deserialization of your object can be done in multiple ways, you should inherit MultipleSerializable/MultipleDeserializable(or both):
 ```Cpp
 struct Cat : public MultipleSerializable, public MultipleDeserializable
 {
